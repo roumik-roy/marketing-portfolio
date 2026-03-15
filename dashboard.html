@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roumik Roy – SEO Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Inter,sans-serif}
+html{scroll-behavior:smooth}
+body{background:#0a0f1e;color:#e2e8f0;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{
+  position:fixed;top:0;left:0;width:220px;height:100vh;
+  background:#0f172a;border-right:1px solid rgba(255,255,255,0.07);
+  padding:28px 0;display:flex;flex-direction:column;z-index:100;
+}
+.sidebar-logo{padding:0 24px 28px;font-size:16px;font-weight:700;color:#f1f5f9;border-bottom:1px solid rgba(255,255,255,0.07)}
+.sidebar-logo span{color:#60a5fa}
+.sidebar-nav{margin-top:20px;flex:1}
+.sidebar-nav a{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 24px;font-size:14px;color:#94a3b8;
+  text-decoration:none;transition:all .2s;border-left:3px solid transparent;
+}
+.sidebar-nav a:hover,.sidebar-nav a.active{color:#f1f5f9;background:rgba(96,165,250,0.08);border-left-color:#60a5fa}
+.sidebar-footer{padding:20px 24px;border-top:1px solid rgba(255,255,255,0.07)}
+.sidebar-footer a{font-size:13px;color:#60a5fa;text-decoration:none}
+
+/* MAIN */
+.main{margin-left:220px;padding:36px 40px;min-height:100vh}
+
+/* HEADER */
+.page-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:36px;flex-wrap:wrap;gap:16px}
+.page-header h1{font-size:26px;font-weight:700;color:#f1f5f9}
+.page-header p{font-size:14px;color:#64748b;margin-top:4px}
+.data-badge{
+  background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.25);
+  color:#34d399;font-size:12px;font-weight:600;padding:6px 14px;border-radius:20px;
+  display:flex;align-items:center;gap:6px;white-space:nowrap;
+}
+.data-badge::before{content:'';width:7px;height:7px;border-radius:50%;background:#34d399;display:inline-block;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* KPI CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px;margin-bottom:32px}
+.kpi{
+  background:#111827;border:1px solid rgba(255,255,255,0.07);
+  border-radius:14px;padding:22px 24px;position:relative;overflow:hidden;
+  transition:border-color .2s;
+}
+.kpi:hover{border-color:rgba(96,165,250,0.3)}
+.kpi::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:var(--accent,#2563eb);border-radius:14px 14px 0 0;
+}
+.kpi-label{font-size:12px;font-weight:500;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.kpi-value{font-size:32px;font-weight:700;color:#f1f5f9;line-height:1}
+.kpi-sub{font-size:12px;color:#475569;margin-top:6px}
+
+/* SECTION TITLES */
+.section{margin-bottom:32px}
+.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.section-title{font-size:16px;font-weight:600;color:#f1f5f9}
+.section-sub{font-size:13px;color:#475569}
+
+/* CHART GRID */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:32px}
+.chart-box{
+  background:#111827;border:1px solid rgba(255,255,255,0.07);
+  border-radius:14px;padding:24px;
+}
+.chart-box h3{font-size:14px;font-weight:600;color:#94a3b8;margin-bottom:20px;text-transform:uppercase;letter-spacing:.05em}
+.chart-full{grid-column:1/-1}
+
+/* CTR DONUT LEGEND */
+.donut-wrap{display:flex;align-items:center;gap:32px}
+.donut-wrap canvas{max-width:200px;max-height:200px}
+.donut-legend{flex:1}
+.legend-item{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.legend-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+.legend-label{font-size:13px;color:#94a3b8;flex:1}
+.legend-val{font-size:13px;font-weight:600;color:#f1f5f9}
+
+/* KEYWORDS */
+.kw-grid{display:flex;flex-wrap:wrap;gap:10px}
+.kw-tag{
+  background:rgba(37,99,235,0.15);border:1px solid rgba(37,99,235,0.25);
+  color:#93c5fd;font-size:13px;padding:6px 14px;border-radius:20px;
+  transition:background .2s;cursor:default;
+}
+.kw-tag:hover{background:rgba(37,99,235,0.28)}
+
+/* TABLE */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+thead th{
+  padding:12px 16px;text-align:left;font-size:11px;font-weight:600;
+  color:#475569;text-transform:uppercase;letter-spacing:.07em;
+  border-bottom:1px solid rgba(255,255,255,0.07);background:transparent;
+}
+tbody td{
+  padding:13px 16px;border-bottom:1px solid rgba(255,255,255,0.05);
+  color:#cbd5e1;vertical-align:middle;
+}
+tbody tr:hover td{background:rgba(255,255,255,0.03)}
+tbody tr:last-child td{border-bottom:none}
+.td-title{color:#f1f5f9;font-weight:500;max-width:320px}
+.td-bar{display:flex;align-items:center;gap:10px}
+.bar-bg{flex:1;height:6px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden;min-width:60px}
+.bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#2563eb,#60a5fa)}
+.ctr-pill{
+  display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;
+}
+.ctr-high{background:rgba(52,211,153,0.15);color:#34d399}
+.ctr-mid{background:rgba(251,191,36,0.15);color:#fbbf24}
+.ctr-low{background:rgba(148,163,184,0.12);color:#94a3b8}
+
+.read-link{color:#60a5fa;text-decoration:none;font-size:12px;font-weight:600;white-space:nowrap}
+.read-link:hover{color:#93c5fd}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .sidebar{display:none}
+  .main{margin-left:0;padding:24px 20px}
+  .chart-grid{grid-template-columns:1fr}
+  .donut-wrap{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">Roumik Roy <span>·</span> SEO</div>
+  <nav class="sidebar-nav">
+    <a href="#overview" class="active">📊 Overview</a>
+    <a href="#performance">📈 Performance</a>
+    <a href="#ctr">🎯 CTR Analysis</a>
+    <a href="#keywords">🔑 Keywords</a>
+    <a href="#articles">📄 Articles</a>
+  </nav>
+  <div class="sidebar-footer">
+    <a href="index.html">← Back to Portfolio</a>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <div>
+      <h1>SEO Analytics Dashboard</h1>
+      <p>Google Search Console data · GetMyUni.com · Roumik Roy</p>
+    </div>
+    <div class="data-badge">Live GSC Data</div>
+  </div>
+
+  <!-- KPI CARDS -->
+  <div class="kpi-grid" id="overview">
+    <div class="kpi" style="--accent:#2563eb">
+      <div class="kpi-label">Total Articles</div>
+      <div class="kpi-value" id="kpiArticles">0</div>
+      <div class="kpi-sub">Published on GetMyUni</div>
+    </div>
+    <div class="kpi" style="--accent:#7c3aed">
+      <div class="kpi-label">Total GSC Clicks</div>
+      <div class="kpi-value" id="kpiClicks">0</div>
+      <div class="kpi-sub">Organic search traffic</div>
+    </div>
+    <div class="kpi" style="--accent:#0891b2">
+      <div class="kpi-label">Total Impressions</div>
+      <div class="kpi-value" id="kpiImpressions">0</div>
+      <div class="kpi-sub">SERP appearances</div>
+    </div>
+    <div class="kpi" style="--accent:#059669">
+      <div class="kpi-label">Avg CTR</div>
+      <div class="kpi-value" id="kpiCTR">0%</div>
+      <div class="kpi-sub">Click-through rate</div>
+    </div>
+    <div class="kpi" style="--accent:#d97706">
+      <div class="kpi-label">Avg Position</div>
+      <div class="kpi-value" id="kpiPosition">0</div>
+      <div class="kpi-sub">Google SERP ranking</div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 1 -->
+  <div class="chart-grid" id="performance">
+    <div class="chart-box chart-full">
+      <h3>Top 10 Articles by Clicks</h3>
+      <canvas id="barChart" height="80"></canvas>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 2 -->
+  <div class="chart-grid" id="ctr">
+    <div class="chart-box">
+      <h3>CTR Distribution</h3>
+      <div class="donut-wrap">
+        <canvas id="donutChart" width="180" height="180"></canvas>
+        <div class="donut-legend">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#34d399"></div>
+            <span class="legend-label">High CTR ≥10%</span>
+            <span class="legend-val" id="ctrHigh">—</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#fbbf24"></div>
+            <span class="legend-label">Mid CTR 5–10%</span>
+            <span class="legend-val" id="ctrMid">—</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#475569"></div>
+            <span class="legend-label">Low CTR &lt;5%</span>
+            <span class="legend-val" id="ctrLow">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="chart-box">
+      <h3>Clicks vs Impressions (Top 8)</h3>
+      <canvas id="bubbleChart" height="180"></canvas>
+    </div>
+  </div>
+
+  <!-- KEYWORDS -->
+  <div class="section" id="keywords">
+    <div class="section-head">
+      <div class="section-title">Ranking Keywords</div>
+      <div class="section-sub">Top search queries driving traffic</div>
+    </div>
+    <div class="chart-box" style="padding:24px">
+      <div class="kw-grid" id="kwGrid"></div>
+    </div>
+  </div>
+
+  <!-- ARTICLES TABLE -->
+  <div class="section" id="articles">
+    <div class="section-head">
+      <div class="section-title">Top 15 Articles by Clicks</div>
+      <div class="section-sub">Sorted by GSC click volume</div>
+    </div>
+    <div class="chart-box" style="padding:0">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Title</th>
+              <th>Clicks</th>
+              <th>Impressions</th>
+              <th>CTR</th>
+              <th>Link</th>
+            </tr>
+          </thead>
+          <tbody id="articleTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ── REAL GSC DATA ──
+const DATA = {
+  total_clicks: 115361,
+  total_impressions: 2625733,
+  total_articles: 85,
+  avg_ctr: 4.9,
+  avg_position: 7.8,
+  top10: [
+    {title:"Karnataka SSLC Blueprint",url:"https://www.getmyuni.com/articles/karnataka-sslc-blueprint",clicks:18653,impressions:115424,ctr:0.1616},
+    {title:"CBSE Class 12 Physics Deleted Syllabus",url:"https://www.getmyuni.com/articles/cbse-class-12-physics-deleted-syllabus",clicks:10548,impressions:296349,ctr:0.0356},
+    {title:"CBSE Physical Education Class 12 Marks Distribution",url:"https://www.getmyuni.com/articles/cbse-physical-education-class-12-marks-distribution",clicks:10103,impressions:156970,ctr:0.0644},
+    {title:"CBSE Admit Card Id Finder",url:"https://www.getmyuni.com/articles/cbse-admit-card-id-finder",clicks:7416,impressions:115116,ctr:0.0644},
+    {title:"CBSE Roll Number Finder",url:"https://www.getmyuni.com/articles/cbse-roll-number-finder",clicks:7210,impressions:137359,ctr:0.0525},
+    {title:"Maharashtra SSC Toppers Answer Sheet",url:"https://www.getmyuni.com/articles/maharashtra-ssc-toppers-answer-sheet",clicks:5068,impressions:27700,ctr:0.183},
+    {title:"CBSE Class 12 Business Studies Deleted Syllabus",url:"https://www.getmyuni.com/articles/cbse-class-12-business-studies-deleted-syllabus",clicks:4572,impressions:39807,ctr:0.1149},
+    {title:"Karnataka 1st PUC Physics Model Question Paper",url:"https://www.getmyuni.com/articles/karnataka-1st-puc-physics-model-question-paper",clicks:3794,impressions:40914,ctr:0.0927},
+    {title:"Jharkhand BEd Entrance Exam",url:"https://www.getmyuni.com/articles/jharkhand-bed-entrance-exam",clicks:3154,impressions:82925,ctr:0.038},
+    {title:"Karnataka 1st PUC Biology Model Question Paper",url:"https://www.getmyuni.com/articles/karnataka-1st-puc-biology-model-question-paper",clicks:2896,impressions:40933,ctr:0.0707}
+  ],
+  ctr_buckets: {high:9, mid:29, low:47},
+  keywords: [
+    "boards roll number","financial market class 12 deleted portion",
+    "class 12 CS viva questions answers pdf","cbse class 10 blueprint 2024-25",
+    "nbse blueprint 2024 class 12","nbse blueprint 2024 class 10",
+    "board seating arrangement","deleted syllabus class 12 cbse 2024-25",
+    "how to find cbse roll number by name","financial markets deleted topics class 12",
+    "class 12 business studies deleted syllabus 2024-25","cbse roll number finder"
+  ],
+  table: [
+    {title:"Karnataka SSLC Blueprint",url:"https://www.getmyuni.com/articles/karnataka-sslc-blueprint",clicks:18653,impressions:115424,ctr:16.2},
+    {title:"CBSE Class 12 Physics Deleted Syllabus",url:"https://www.getmyuni.com/articles/cbse-class-12-physics-deleted-syllabus",clicks:10548,impressions:296349,ctr:3.6},
+    {title:"CBSE Physical Education Class 12 Marks Distribution",url:"https://www.getmyuni.com/articles/cbse-physical-education-class-12-marks-distribution",clicks:10103,impressions:156970,ctr:6.4},
+    {title:"CBSE Admit Card Id Finder",url:"https://www.getmyuni.com/articles/cbse-admit-card-id-finder",clicks:7416,impressions:115116,ctr:6.4},
+    {title:"CBSE Roll Number Finder",url:"https://www.getmyuni.com/articles/cbse-roll-number-finder",clicks:7210,impressions:137359,ctr:5.2},
+    {title:"Maharashtra SSC Toppers Answer Sheet",url:"https://www.getmyuni.com/articles/maharashtra-ssc-toppers-answer-sheet",clicks:5068,impressions:27700,ctr:18.3},
+    {title:"CBSE Class 12 Business Studies Deleted Syllabus",url:"https://www.getmyuni.com/articles/cbse-class-12-business-studies-deleted-syllabus",clicks:4572,impressions:39807,ctr:11.5},
+    {title:"Karnataka 1st PUC Physics Model Question Paper",url:"https://www.getmyuni.com/articles/karnataka-1st-puc-physics-model-question-paper",clicks:3794,impressions:40914,ctr:9.3},
+    {title:"Jharkhand BEd Entrance Exam",url:"https://www.getmyuni.com/articles/jharkhand-bed-entrance-exam",clicks:3154,impressions:82925,ctr:3.8},
+    {title:"Karnataka 1st PUC Biology Model Question Paper",url:"https://www.getmyuni.com/articles/karnataka-1st-puc-biology-model-question-paper",clicks:2896,impressions:40933,ctr:7.1},
+    {title:"Kerala Plus Two Deleted Portions",url:"https://www.getmyuni.com/articles/kerala-plus-two-deleted-portions",clicks:2832,impressions:24211,ctr:11.7},
+    {title:"Karnataka 2nd PUC Blueprint",url:"https://www.getmyuni.com/articles/karnataka-2nd-puc-blueprint",clicks:2581,impressions:191862,ctr:1.4},
+    {title:"Karnataka 1st PUC Economics Model Question",url:"https://www.getmyuni.com/articles/karnataka-1st-puc-economics-model-question",clicks:2183,impressions:34615,ctr:6.3},
+    {title:"CBSE Subject Codes For Class 10",url:"https://www.getmyuni.com/articles/cbse-subject-codes-for-class-10",clicks:2071,impressions:185390,ctr:1.1},
+    {title:"CBSE Class 11 Economics Deleted Syllabus",url:"https://www.getmyuni.com/articles/cbse-class-11-economics-deleted-syllabus",clicks:1917,impressions:16683,ctr:11.5}
+  ]
+};
+
+// ── ANIMATED COUNTERS ──
+function animateCounter(id, target, suffix='', decimals=0) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  let count = 0, step = target / 60;
+  const fmt = v => decimals ? v.toFixed(decimals) : Math.floor(v).toLocaleString();
+  const interval = setInterval(() => {
+    count += step;
+    if (count >= target) { count = target; clearInterval(interval); }
+    el.textContent = fmt(count) + suffix;
+  }, 18);
+}
+
+animateCounter('kpiArticles', DATA.total_articles);
+animateCounter('kpiClicks', DATA.total_clicks);
+animateCounter('kpiImpressions', DATA.total_impressions);
+animateCounter('kpiCTR', DATA.avg_ctr, '%', 1);
+animateCounter('kpiPosition', DATA.avg_position, '', 1);
+
+// CTR bucket counts
+document.getElementById('ctrHigh').textContent = DATA.ctr_buckets.high + ' articles';
+document.getElementById('ctrMid').textContent  = DATA.ctr_buckets.mid  + ' articles';
+document.getElementById('ctrLow').textContent  = DATA.ctr_buckets.low  + ' articles';
+
+// ── BAR CHART — Top 10 Clicks ──
+new Chart(document.getElementById('barChart'), {
+  type: 'bar',
+  data: {
+    labels: DATA.top10.map(a => a.title.length > 35 ? a.title.slice(0,34)+'…' : a.title),
+    datasets: [{
+      label: 'Clicks',
+      data: DATA.top10.map(a => a.clicks),
+      backgroundColor: DATA.top10.map((_, i) =>
+        `hsla(${215 - i*8}, 80%, ${60 - i*2}%, 0.85)`),
+      borderRadius: 6,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => ` ${ctx.parsed.y.toLocaleString()} clicks`
+        }
+      }
+    },
+    scales: {
+      x: { ticks: { color: '#64748b', font: { size: 11 }, maxRotation: 35 }, grid: { color: 'rgba(255,255,255,0.04)' } },
+      y: { ticks: { color: '#64748b', callback: v => v.toLocaleString() }, grid: { color: 'rgba(255,255,255,0.06)' } }
+    }
+  }
+});
+
+// ── DONUT — CTR Distribution ──
+new Chart(document.getElementById('donutChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['High ≥10%', 'Mid 5–10%', 'Low <5%'],
+    datasets: [{
+      data: [DATA.ctr_buckets.high, DATA.ctr_buckets.mid, DATA.ctr_buckets.low],
+      backgroundColor: ['#34d399','#fbbf24','#475569'],
+      borderWidth: 0,
+      hoverOffset: 6
+    }]
+  },
+  options: {
+    cutout: '70%',
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed} articles` } }
+    }
+  }
+});
+
+// ── BUBBLE — Clicks vs Impressions ──
+new Chart(document.getElementById('bubbleChart'), {
+  type: 'bubble',
+  data: {
+    datasets: DATA.top10.slice(0,8).map((a, i) => ({
+      label: a.title.split(' ').slice(0,3).join(' '),
+      data: [{ x: a.impressions, y: a.clicks, r: Math.max(6, Math.round(a.ctr * 200)) }],
+      backgroundColor: `hsla(${215 - i*20}, 75%, 60%, 0.7)`,
+    }))
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => [
+            ` ${ctx.dataset.label}`,
+            ` Clicks: ${ctx.raw.y.toLocaleString()}`,
+            ` Impressions: ${ctx.raw.x.toLocaleString()}`,
+          ]
+        }
+      }
+    },
+    scales: {
+      x: { title: { display: true, text: 'Impressions', color: '#64748b', font:{size:11} }, ticks: { color: '#64748b', callback: v => (v/1000)+'k' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+      y: { title: { display: true, text: 'Clicks', color: '#64748b', font:{size:11} }, ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+    }
+  }
+});
+
+// ── KEYWORDS ──
+const kwGrid = document.getElementById('kwGrid');
+DATA.keywords.forEach(kw => {
+  const tag = document.createElement('span');
+  tag.className = 'kw-tag';
+  tag.textContent = kw;
+  kwGrid.appendChild(tag);
+});
+
+// ── ARTICLES TABLE ──
+const maxClicks = DATA.table[0].clicks;
+const tbody = document.getElementById('articleTableBody');
+DATA.table.forEach((a, i) => {
+  const ctrClass = a.ctr >= 10 ? 'ctr-high' : a.ctr >= 5 ? 'ctr-mid' : 'ctr-low';
+  const barPct = Math.round((a.clicks / maxClicks) * 100);
+  tbody.innerHTML += `
+    <tr>
+      <td style="color:#475569;font-size:13px">${i+1}</td>
+      <td class="td-title">${a.title}</td>
+      <td>
+        <div class="td-bar">
+          <span style="font-weight:600;color:#f1f5f9;min-width:52px">${a.clicks.toLocaleString()}</span>
+          <div class="bar-bg"><div class="bar-fill" style="width:${barPct}%"></div></div>
+        </div>
+      </td>
+      <td style="color:#94a3b8">${a.impressions.toLocaleString()}</td>
+      <td><span class="ctr-pill ${ctrClass}">${a.ctr}%</span></td>
+      <td><a href="${a.url}" target="_blank" class="read-link">↗ View</a></td>
+    </tr>`;
+});
+
+// ── SIDEBAR ACTIVE LINK ON SCROLL ──
+const sections = ['overview','performance','ctr','keywords','articles'];
+const links = document.querySelectorAll('.sidebar-nav a');
+window.addEventListener('scroll', () => {
+  let current = 'overview';
+  sections.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && window.scrollY >= el.offsetTop - 120) current = id;
+  });
+  links.forEach(l => {
+    l.classList.toggle('active', l.getAttribute('href') === '#'+current);
+  });
+});
+</script>
+</body>
+</html>
